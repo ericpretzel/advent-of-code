@@ -1,4 +1,4 @@
-from heapq import heappop, heappush # for priority queue
+from heapq import heappop, heappush # for min-priority queue
 
 puzzle_input = [s.strip() for s in open('input.in').readlines()]
 width, height = len(puzzle_input[0]), len(puzzle_input)
@@ -6,8 +6,8 @@ width, height = len(puzzle_input[0]), len(puzzle_input)
 risk = {}
 for x in range(width):
     for y in range(height):
-        for i in range(5):
-            for j in range(5):
+        for i in range(5): # set range to 1 for part 1
+            for j in range(5): # set range to 1 for part 1
                 c = (x+width*i, y+height*j)
                 risk[c] = int(puzzle_input[y][x]) + i + j
                 if risk[c] > 9: risk[c] %= 9
@@ -24,20 +24,19 @@ def neighbors(coord):
 def dijkstra_risk(src, dst):
     dist = {}
     queue = []
-    unvisited = set()
     for node in risk:
-        dist[node] = 99999999999
-        unvisited.add(node)
+        dist[node] = 999999
+        heappush(queue, (dist[node], node))
+    
     dist[src] = 0
     heappush(queue, (0, src))
-    while dst in unvisited:
+    while len(queue) > 0:
         current = heappop(queue)[1]
-        unvisited.remove(current)
-        for neighbor in filter(lambda n: n in unvisited, neighbors(current)):
-            if dist[current] + risk[neighbor] < dist[neighbor]:
-                if neighbor in queue: queue.remove((dist[neighbor], neighbor))
-                dist[neighbor] = dist[current] + risk[neighbor]
-                heappush(queue, (dist[current] + risk[neighbor], neighbor))
+        for neighbor in neighbors(current):
+            cost = dist[current] + risk[neighbor]
+            if cost < dist[neighbor]:
+                dist[neighbor] = cost
+                heappush(queue, (cost, neighbor))
     return dist[dst]
                 
-print("lowest risk:", dijkstra_risk((0,0), (width*5-1, height*5-1)))
+print("lowest risk:", dijkstra_risk((0,0), (width*5-1, height*5-1))) # change to width-1, height-1 for part 1
