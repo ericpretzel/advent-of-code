@@ -45,6 +45,7 @@ class Packet:
             return 1 if self.subpackets[0].evaluate() == self.subpackets[1].evaluate() else 0
 
 # numbers consumed since this was last called
+amt_consumed = 0
 def nums_consumed():
     global amt_consumed
     tmp = amt_consumed
@@ -62,32 +63,10 @@ def consume(num_digits):
     amt_consumed += num_digits
     return consumed
 
-with open('input.in') as f:
-    hex_code = f.readline().strip()
-buffer = ''
-packet_stack = []
-amt_consumed = 0
-# read first packet (this is super gross)
-version = int(consume(3), base=2)
-total_version_nums = version
-type_id = int(consume(3), base=2)
-first_packet = Packet(version, type_id)
-if consume(1) == '0':
-    subpackets_len = int(consume(15), base=2)
-    first_packet.subpackets_len = subpackets_len
-else: 
-    subpackets_rem = int(consume(11), base=2)
-    first_packet.subpackets_rem = subpackets_rem
-packet_stack.append(first_packet)
-
-
 def read_packet():
     version = int(consume(3), base=2)
-
     type_id = int(consume(3), base=2)
-
     packet = Packet(version, type_id)
-
     if type_id == 4: # literal value packet
         # get the literal value
         group = consume(5)
@@ -95,56 +74,42 @@ def read_packet():
         while group[0] == '1':
             group = consume(5)
             digits += group[1:]
-
-amt_consumed = 0
-while len(packet_stack) > 0:
-    version = int(consume(3), base=2)
-    total_version_nums += version
-
-    type_id = int(consume(3), base=2)
-
-    packet = Packet(version, type_id)
-
-    if type_id == 4: # literal value packet
-        # get the literal value
-        group = consume(5)
-        digits = group[1:]
-        while group[0] == '1':
-            group = consume(5)
-            digits += group[1:]
-        
-        # create the packet
-        
         packet.val = int(digits, base=2)
-
-        # add to parent packet
-        # the stack should never be empty at this point
-        # bc our input will definitely not start
-        # with a literal value packet 
-        parent_packet = packet_stack[-1]
-        packet.parent = parent_packet
-        parent_packet.add_subpacket(packet)
-        
-        # check if we need to pop from the stack
-        while parent_packet and (parent_packet.subpackets_len == 0 or parent_packet.subpackets_rem == 0):
-            packet_stack.pop()
-            parent_packet = parent_packet.parent
-
     else: # operator packet
-
         if consume(1) == '0':
             subpackets_len = int(consume(15), base=2)
             packet.subpackets_len = subpackets_len
         else: 
             subpackets_rem = int(consume(11), base=2)
             packet.subpackets_rem = subpackets_rem
+
+    return packet
+
+with open('testinput.in') as f:
+    hex_code = f.readline().strip()
+buffer = ''
+packet_stack = []
+
+# read first packet
+first_packet = read_packet()
+packet_stack.append(first_packet)
+amt_consumed = 0
+
+while len(packet_stack) > 0:
+    packet = read_packet()
+
+    parent_packet = packet_stack[-1]
+
+    packet.parent = parent_packet
+    parent_packet.add_subpacket(packet)
         
-        parent_packet = packet_stack[-1]
-        packet.parent = parent_packet
-        parent_packet.add_subpacket(packet)
-            
+    if packet.id == 4:
+        # check if we need to pop from the stack
+        while parent_packet and (parent_packet.subpackets_len == 0 or parent_packet.subpackets_rem == 0):
+            packet_stack.pop()
+            parent_packet = parent_packet.parent
+    else:   
         packet_stack.append(packet)
 
-
-print('total version no:', total_version_nums)
-print('packet transmission evaluated:', first_packet.evaluate())
+print('total version no:', first_packet.total_version_num())
+print('transmission evaluated:', first_packet.evaluate())
