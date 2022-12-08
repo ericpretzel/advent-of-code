@@ -7,15 +7,34 @@ for y in range(max_y):
     for x in range(max_x):
         grid[(x, y)] = int(pi[y][x])
 
-def is_visible(x, y, grid):
-    if all(grid[(n, y)] < grid[(x, y)] for n in range(x)):
-        return 1
-    if all(grid[(n, y)] < grid[(x, y)] for n in range(x+1, max_x)):
-        return 1
-    if all(grid[(x, n)] < grid[(x, y)] for n in range(y)):
-        return 1
-    if all(grid[(x, n)] < grid[(x, y)] for n in range(y+1, max_y)):
-        return 1
-    return 0
+visible = set()
+# from horizontal
 
-print(sum(is_visible(x, y, grid) for x, y in grid.keys()))
+for y in range(max_y):
+    max_tree = -1
+    for x in range(max_x):
+        tree = grid[(x, y)]
+        if tree > max_tree:
+            visible.add( (x, y) )
+            max_tree = tree
+    max_tree = -1
+    for x in reversed(range(max_x)):
+        tree = grid[(x, y)]
+        if tree > max_tree:
+            visible.add( (x, y) )
+            max_tree = tree
+# from vertical
+for x in range(max_x):
+    max_tree = -1
+    for y in range(max_y):
+        tree = grid[(x, y)]
+        if tree > max_tree:
+            visible.add( (x, y) )
+            max_tree = tree
+    max_tree = -1
+    for y in reversed(range(max_y)):
+        tree = grid[(x, y)]
+        if tree > max_tree:
+            visible.add( (x, y) )
+            max_tree = tree    
+print(len(visible))
