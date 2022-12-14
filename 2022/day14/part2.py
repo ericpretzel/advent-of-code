@@ -21,13 +21,12 @@ while grid.get((500, 0), '.') != '+':
     units += 1
     x, y = 500, 0
     while y < floor-1:
-        below = [grid.get((a, y+1), '.') for a in [x-1, x, x+1]]
-        if below[1] == '.':
+        if (x, y+1) not in grid:
             y += 1
-        elif below[0] == '.':
+        elif (x-1, y+1) not in grid:
             y += 1
             x -= 1
-        elif below[2] == '.':
+        elif (x+1, y+1) not in grid:
             y += 1
             x += 1
         else:
